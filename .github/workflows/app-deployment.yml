@@ -1,0 +1,35 @@
+name: Build and Deploy to EKS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          region: us-east-1
+
+      - name: Build and Push Docker image to Amazon ECR
+        run: |
+          docker build -t ${{ secrets.ECR_REPOSITORY }}:latest .
+          docker tag ${{ secrets.ECR_REPOSITORY }}:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+
+      - name: Deploy to EKS
+        uses: k8s-actions/eks-deploy@v1
+        with:
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+          cluster-name: cluster-main
+          namespace: GMS
+          context: "aws"
