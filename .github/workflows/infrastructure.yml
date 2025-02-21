@@ -49,6 +49,10 @@ jobs:
           exit 1
         fi
 
+    - name: Force Unlock Terraform State
+      run: terraform force-unlock -force $(aws dynamodb scan --table-name terraform-locks --query "Items[0].LockID.S" --output text)
+      if: failure() # Runs only if the previous step fails
+
     - name: Terraform Plan
       run: |
         cd infrastructure
