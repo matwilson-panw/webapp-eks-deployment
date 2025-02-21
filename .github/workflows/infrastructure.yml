@@ -40,6 +40,15 @@ jobs:
         cd infrastructure
         terraform fmt -check
 
+    - name: Check for Existing Terraform Lock
+      id: check_lock
+      run: |
+        LOCK_ID=$(aws dynamodb scan --table-name terraform-locks --query "Items[0].LockID.S" --output text)
+        if [ "$LOCK_ID" != "null" ]; then
+          echo "Terraform state is locked by $LOCK_ID"
+          exit 1
+        fi
+
     - name: Terraform Plan
       run: |
         cd infrastructure
