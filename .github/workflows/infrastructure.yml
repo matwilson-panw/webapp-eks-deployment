@@ -22,7 +22,13 @@ jobs:
     - name: Debug OIDC Tokens
       run: |
         echo "GitHub Actions OIDC Token:"
-        curl -sSL -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com"
+        TOKEN=$(curl -sSL -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
+
+        echo "Extracting JWT Payload..."
+        PAYLOAD=$(echo $TOKEN | cut -d "." -f2 | base64 -d | jq)
+
+        echo "OIDC Token Payload.."
+        echo "$PAYLOAD"
 
       env:
         ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ secrets.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
