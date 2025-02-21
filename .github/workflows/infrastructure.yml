@@ -43,7 +43,9 @@ jobs:
     - name: Terraform Plan
       run: |
         cd infrastructure
-        terraform plan -out=tfplan
+        terraform plan -out=tfplan -lock-timeout=60s -input=false -no-color
+      env:
+        TF_LOG: DEBUG
 
     - name: Terraform Apply (Manual Approval Required)
       run: |
