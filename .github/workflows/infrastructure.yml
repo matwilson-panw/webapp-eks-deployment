@@ -19,45 +19,11 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    - name: Debug OIDC Tokens
-      run: |
-        echo "GitHub Actions OIDC Token:"
-        TOKEN=$(curl -sSL -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
-
-        echo "Extracting JWT Payload..."
-        PAYLOAD=$(echo $TOKEN | cut -d "." -f2 | base64 -d | jq)
-
-        echo "OIDC Token Payload.."
-        echo "$PAYLOAD"
-
-      env:
-        ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ secrets.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
-        ACTIONS_ID_TOKEN_REQUEST_URL: ${{ secrets.ACTIONS_ID_TOKEN_REQUEST_URL }}
-      
-    - name: Test Assume Role
-      run: |
-        ROLE_ARN="arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GithubActionsRole"
-        TOKEN=$(curl -sS -H "Authorization: bearer $(curl -sS -X POST -H \"Accept: application/json; X-GitHub-Api-Version: 2022-11-28\" \"$ACTIONS_ID_TOKEN_REQUEST_URL\")" | jq -r '.value')
-          
-        echo "Attempting to assume role: $ROLE_ARN"
-          
-        RESPONSE=$(curl -sS -X POST "https://sts.amazonaws.com" \
-          -H "Content-Type: application/x-www-form-urlencoded" \
-          -d "Action=AssumeRoleWithWebIdentity" \
-          -d "RoleArn=$ROLE_ARN" \
-          -d "RoleSessionName=GitHubActionsSession" \
-          -d "WebIdentityToken=$TOKEN" \
-          -d "Version=2011-06-15")
-          
-        echo "AWS STS Response:"
-        echo "$RESPONSE"
-
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
-        role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GithubActionsRole
         aws-region: us-east-1
-        audience: sts.amazonaws.com
+        role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GithubActionsRole
 
     - name: Install Terraform
       uses: hashicorp/setup-terraform@v2
