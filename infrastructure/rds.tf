@@ -10,4 +10,5 @@ resource "aws_db_instance" "rds" {
   skip_final_snapshot = true
 
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
+  iam_database_authentication_enabled = true
 }
